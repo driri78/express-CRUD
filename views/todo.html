@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+    <link rel="stylesheet" href="/styles/reset.css" />
+    <style>
+      body {
+        padding: 15px;
+      }
+      .container {
+        width: 400px;
+        margin: auto;
+      }
+      .form-box {
+        display: flex;
+        justify-content: center;
+        margin-bottom: 20px;
+      }
+      form {
+        width: 250px;
+        height: 38px;
+        display: flex;
+        justify-content: space-evenly;
+      }
+      form #todo {
+        font-size: 16px;
+      }
+      .todo {
+        display: grid;
+        grid-template-columns: 0.1fr 1fr repeat(2, 0.5fr);
+        margin-bottom: 15px;
+      }
+      label {
+        text-align: center;
+      }
+      /* label이 뒤에 있을때 가능 */
+      /* .chkBox:checked + label {
+        text-decoration: line-through;
+      } */
+      label,
+      .chkBox {
+        cursor: pointer;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="form-box">
+        <form>
+          <input
+            type="text"
+            id="todo"
+            name="todo"
+            placeholder="할일을 입력하세요"
+            value=""
+          />
+          <button>버튼</button>
+        </form>
+      </div>
+      <div class="todos-container">
+        <!-- <div class="todo">
+          <div>id</div>
+          <label for="test">todo</label>
+          <input type="checkbox" class="chkBox" id="test" checked></input>
+          <button type="button" class="removeTodo">삭제</button>
+        </div> -->
+      </div>
+    </div>
+    <script>
+      function lineThrough(currentTarget) {
+        if (currentTarget.checked) {
+          currentTarget.previousElementSibling.style.textDecoration =
+            "line-through";
+        } else {
+          currentTarget.previousElementSibling.style.textDecoration = "none";
+        }
+      }
+      // localStorage에 저장
+      function localStorageSave(todos) {
+        localStorage.setItem("todos", todos);
+      }
+      // 가져온 데이터 출력
+      function showTodoData(todos) {
+        // JSON.parse() => 배열
+        if (Array.isArray(todos)) {
+          document.querySelector(".todos-container").innerHTML = "";
+          todos.map((todo) => {
+            const str = `
+              <div class="todo">
+                <div>${todo.id}</div>
+                <label for="test${todo.id}">${todo.todo}</label>
+                <input type="checkbox" class="chkBox" id="test${todo.id}" ${
+              todo.checked ? "checked" : ""
+            }></input>
+                <button type="button" class="removeTodo">삭제</button>
+                <input type="hidden" class="idValue" value=${todo.id}>
+              </div>
+              `;
+            document
+              .querySelector(".todos-container")
+              .insertAdjacentHTML("beforeend", str);
+          });
+        }
+        // JSON.parse()[JSON.parse().length - 1] => 데이터가 추가될때는 반복문을 사용할 필요가 없다(반복해서 추가할경우 에러)
+        // 데이터가 추가할때마다 하나씩 추가하는것이 아닌 다 지우고 데이터가 추가된 데이터들을 전부 출력
+        // document.querySelector(".todos-container").innerHTML = "";
+        // } else {
+        //   // todos === todo
+        //   const str = `
+        //       <div class="todo">
+        //         <div>${todos.id}</div>
+        //         <label for="test${todos.id}">${todos.todo}</label>
+        //         <input type="checkbox" class="chkBox" id="test${todos.id}" ${
+        //     todos.check ? "checked" : ""
+        //   }></input>
+        //         <button type="button" class="removeTodo">삭제</button>
+        //         <input type="hidden" class="idValue" value=${todos.id}>
+        //       </div>
+        //       `;
+        //   document
+        //     .querySelector(".todos-container")
+        //     .insertAdjacentHTML("beforeend", str);
+        // }
+
+        // 데이터 제거
+        document.querySelectorAll(".removeTodo").forEach((removeBtn) => {
+          removeBtn.addEventListener("click", ({ currentTarget }) => {
+            currentTarget.parentElement.remove();
+            // 두자리수 이상부턴 안됨
+            // const btnClass = currentTarget.getAttribute("class");
+            // const id = btnClass[btnClass.length - 1];
+            const id = currentTarget.nextElementSibling.value;
+            console.log(id);
+            fetch("http://localhost:3000/remove", {
+              method: "DELETE",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ id }),
+            })
+              .then((res) => res.json())
+              .then((res) => {
+                if (res.success) {
+                  localStorageSave(res.todos);
+                  console.log(res.message);
+                  if (JSON.parse(res.todos).length === 0) {
+                    alert("할일이 없습니다!!");
+                  }
+                } else {
+                  console.log(res.message);
+                }
+              });
+          });
+        });
+        const chkBoxs = document.querySelectorAll(".chkBox");
+        // 데이터 수정
+        chkBoxs.forEach((chkBox) => {
+          chkBox.addEventListener("change", ({ currentTarget }) => {
+            // 취소선
+            lineThrough(currentTarget);
+            // console.log(currentTarget.getAttribute("checked"));
+            // console.log(currentTarget.checked); // 이걸 써야됨
+            const checkBoxId = currentTarget.getAttribute("id");
+            const id = checkBoxId[checkBoxId.length - 1];
+            fetch("http://localhost:3000/update", {
+              method: "PUT",
+              headers: { "content-type": "application/json" },
+              body: JSON.stringify({ id, checked: currentTarget.checked }),
+            })
+              .then((res) => res.json())
+              .then((res) => {
+                if (res.success) {
+                  localStorageSave(res.todos);
+                  console.log(res.message);
+                }
+              });
+          });
+        });
+        // 새로고침할때 취소선
+        chkBoxs.forEach((chkBox) => {
+          if (chkBox.checked) {
+            chkBox.previousElementSibling.style.textDecoration = "line-through";
+          } else {
+            chkBox.previousElementSibling.style.textDecoration = "none";
+          }
+        });
+      }
+
+      const input = document.querySelector("#todo");
+      // 처음 브라우저를 요청했을때 todo.json데이터 가져오기
+      // 데이터 가져오기
+      fetch("/", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+      })
+        .then((res) => res.json())
+        .then((res) => {
+          if (res.success) {
+            showTodoData(JSON.parse(res.todos));
+            console.log(res.message);
+          } else {
+            console.log(res.message);
+            alert("할일이 없습니다!!");
+            input.focus();
+          }
+          // 데이터가 없어도 실행되야함
+          localStorageSave(res.todos);
+        });
+
+      // input.value에 값을 입력했는지 확인
+      const validation = function () {
+        if (input.value.trim().length === 0) {
+          alert("할일을 입력해주세요");
+          input.focus();
+          return false;
+        }
+        return true;
+      };
+      // 데이터 추가
+      document.querySelector("form").addEventListener("submit", () => {
+        event.preventDefault();
+        if (validation()) {
+          fetch("http://localhost:3000/add", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ todo: input.value }),
+          })
+            .then((res) => res.json())
+            .then((res) => {
+              if (res.success) {
+                localStorageSave(res.todos);
+                // todo => 마지막으로 들어간(추가된) 데이터이므로 배열의 마지막 요소이다(반복해서 추가할경우 에러)
+                // const todo = JSON.parse(res.todos)[
+                //   JSON.parse(res.todos).length - 1
+                // ];
+                showTodoData(JSON.parse(res.todos));
+                input.value = "";
+                // 버튼을 눌렀을땐 focus이동이 안됨
+                input.focus();
+                console.log(res.message);
+              } else {
+                console.log(res.message);
+              }
+            });
+        }
+      });
+      // 밖에서 사용할수 없음...
+      // console.log(document.querySelectorAll(".removeTodo"));
+    </script>
+  </body>
+</html>
