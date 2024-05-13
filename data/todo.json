@@ -1,27 +1,7 @@
 [
-  {
-    "id": 1,
-    "todo": "html",
-    "checked": false
-  },
-  {
-    "id": 2,
-    "todo": "css",
-    "checked": false
-  },
-  {
-    "id": 3,
-    "todo": "javascript",
-    "checked": false
-  },
-  {
-    "id": 4,
-    "todo": "nodejs",
-    "checked": false
-  },
-  {
-    "id": 5,
-    "todo": "express",
-    "checked": false
-  }
+  { "id": 1, "todo": "html", "checked": false },
+  { "id": 2, "todo": "css", "checked": false },
+  { "id": 3, "todo": "javascript", "checked": false },
+  { "id": 4, "todo": "nodejs", "checked": false },
+  { "id": 5, "todo": "express", "checked": false }
 ]

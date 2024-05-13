@@ -160,8 +160,9 @@
             lineThrough(currentTarget);
             // console.log(currentTarget.getAttribute("checked"));
             // console.log(currentTarget.checked); // 이걸 써야됨
-            const checkBoxId = currentTarget.getAttribute("id");
-            const id = checkBoxId[checkBoxId.length - 1];
+            const checkBoxId = currentTarget.parentElement.lastElementChild;
+            console.log(checkBoxId);
+            const id = checkBoxId.value;
             fetch("http://localhost:3000/update", {
               method: "PUT",
               headers: { "content-type": "application/json" },
